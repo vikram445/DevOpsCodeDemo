@@ -1,0 +1,55 @@
+name: My GitHub Action Workflow 
+on: 
+  push:
+  pull_request:
+    branches: 
+       - master
+       - feature
+       - stg
+       - dev
+  workflow_dispatch:
+     inputs:
+      environment:
+        type: environment
+        description: Select the environment
+      boolean:
+        type: choice
+        description: Make a choice
+        options:
+         - prod
+         - qa
+         - stg
+         - dev
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: code checkout
+        uses: actions/checkout@v2
+      - name: Set up Java version
+        uses: actions/setup-java@v1
+        with:
+          java-version: '11'
+      - name: Build with Maven
+        run: mvn clean install
+      - name: Upload artifact for deployment job
+        uses: actions/upload-artifact@v2
+        with:
+          name: java-app
+          path: '${{ github.workspace }}/target/*.jar'
+          
+  CI_Checks:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: code checkout
+        uses: actions/checkout@v2
+      - name: Download artifact 
+        uses: actions/download-artifact@v2
+        with:
+          name: java-app
+      - name: Static Code Analysis with checkstyle
+        run: mvn checkstyle:checkstyle
+      - name: Bug analysis with sonarqube scan
+        run: |
+         echo "space"
