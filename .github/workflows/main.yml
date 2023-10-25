@@ -2,27 +2,10 @@ name: My GitHub Action Workflow
 on: 
   push:
   pull_request:
-    branches: 
-       - master
-       - feature
-       - stg
-       - dev
-  workflow_dispatch:
-     inputs:
-      environment:
-        type: environment
-        description: Select the environment
-      boolean:
-        type: choice
-        description: Make a choice
-        options:
-         - prod
-         - qa
-         - stg
-         - dev
+    
 jobs:
   build:
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: code checkout
         uses: actions/checkout@v2
@@ -38,18 +21,6 @@ jobs:
           name: java-app
           path: '${{ github.workspace }}/target/*.war'
           
-  CI_Checks:
-    needs: build
-    runs-on: ubuntu-latest
-    steps:
-      - name: code checkout
-        uses: actions/checkout@v2
-      - name: Download artifact 
-        uses: actions/download-artifact@v2
-        with:
-          name: java-app
-      - name: Static Code Analysis with checkstyle
-        run: mvn checkstyle:checkstyle
-      - name: Bug analysis with sonarqube scan
-        run: |
-         echo "space"
+  
+    
+
