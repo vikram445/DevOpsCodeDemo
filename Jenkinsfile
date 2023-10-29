@@ -1,50 +1,58 @@
-
-pipeline{
-    tools{
-       
-        maven 'mymaven'
+pipeline {
+    agent any
+    tools {
+        maven 'mvn'
     }
-	agent any
-      stages{
-           stage('Checkout the code'){
-	    
-               steps{
-		 echo 'cloning the repo'
-                 git 'https://github.com/Sonal0409/DevOpsClassCodes.git'
-              }
-          }
-          stage('Compile'){
-             
-              steps{
-                  echo 'complie the code again..'
-                  sh 'mvn compile'
-	      }
-          }
-          stage('CodeReview'){
-		  
-              steps{
-		    
-		  echo 'codeReview'
-                  sh 'mvn pmd:pmd'
-              }
-          }
-           stage('UnitTest'){
-		  
-              steps{
-	         
-                  sh 'mvn test'
-              }
-          
-          }
-        
-          stage('Package'){
-		  
-              steps{
-		  
-                  sh 'mvn package'
-              }
-          }
-	     
-          
-      }
-}
+    stages {
+        stage('Declarative CI Pipeline') {
+            steps {
+                echo 'This is Declarative Pipeline'
+            }
+        }
+        stage('Code Checkout') {
+            steps {
+                echo 'Started Cloning'
+                git 'https://github.com/samirkesare/DevOpsCodeDemo.git'
+            }
+        }
+        stage('Parallel Phase') {
+            parallel {
+                stage('Code Stability') {
+                    steps {
+                        echo "Testing code stability"
+                        sh 'mvn test'
+                    }
+                }
+                stage('Code Quality Analysis') {
+                    steps {
+                        echo "Check code quality using PMD"
+                        sh 'mvn pmd:pmd'
+                        publishHTML([allowMissing: false, alwaysLinkToLastBuild: false, keepAll: false, reportDir: 'target/pmd-reports', reportFiles: 'index.html', reportName: 'HTML Report', reportTitles: '', useWrapperFileDirectly: true])
+                    }
+                }
+                stage('Code Coverage Analysis') {
+                    steps {
+                        echo "Check code coverage analysis using Jacoco"
+                        sh 'mvn clean verify'
+                        jacoco()
+                    }
+                }
+            }
+        }
+        stage('Build Artifacts') {
+            steps {
+                sh 'mvn clean install'
+            }
+        }
+        stage('Publish Artifacts') {
+            steps {
+                archiveArtifacts artifacts: '**/*.war', followSymlinks: false
+            }
+        }
+        stage('Deploy Artifacts') {
+            steps {
+                deploy adapters: [tomcat9(credentialsId: 'tomcat', path: '', url: 'http://13.114.143.171:8080/')], contextPath: '/var/lib/jenkins/workspace/assignment04/target/addressbook', war: '**/*.war'
+            }
+        }
+    }
+    }
